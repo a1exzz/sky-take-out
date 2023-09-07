@@ -1,17 +1,25 @@
 package com.sky.service.impl;
 
 import com.sky.constant.MessageConstant;
+import com.sky.constant.PasswordConstant;
 import com.sky.constant.StatusConstant;
+import com.sky.context.BaseContext;
+import com.sky.dto.EmployeeDTO;
 import com.sky.dto.EmployeeLoginDTO;
 import com.sky.entity.Employee;
 import com.sky.exception.AccountLockedException;
 import com.sky.exception.AccountNotFoundException;
 import com.sky.exception.PasswordErrorException;
 import com.sky.mapper.EmployeeMapper;
+import com.sky.result.Result;
 import com.sky.service.EmployeeService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
+
+import java.time.LocalDateTime;
 
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
@@ -39,7 +47,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
 
         //密码比对
-        // TODO 后期需要进行md5加密，然后再进行比对
+        // 对前端传来的明文密码做一个md5加密处理
+        password= DigestUtils.md5DigestAsHex(password.getBytes());
         if (!password.equals(employee.getPassword())) {
             //密码错误
             throw new PasswordErrorException(MessageConstant.PASSWORD_ERROR);
@@ -53,5 +62,34 @@ public class EmployeeServiceImpl implements EmployeeService {
         //3、返回实体对象
         return employee;
     }
+    /**
+     * 新增员工
+     * @param employeeDTO
+     *
+     */
+    @Transactional
+    @Override
+    public void save(EmployeeDTO employeeDTO) {
+        //在持久层还是需要使用实体类  使用dto类是为了方便接受和处理前端传回来的数据
+        Employee employee =new Employee();
+        //对象属性拷贝 方向是 从第一个对象向第二个第二个拷贝
+        BeanUtils.copyProperties(employeeDTO,employee);
+        //设置当前账号状态 默认1为正常使用 0为禁止
+        employee.setStatus(StatusConstant.ENABLE);
+        //设置账号默认密码
+        employee.setPassword(DigestUtils.md5DigestAsHex(PasswordConstant.DEFAULT_PASSWORD.getBytes()));
+        //设置修改和创建时间
+        employee.setCreateTime(LocalDateTime.now());
+        employee.setUpdateTime(LocalDateTime.now());
+        // TODO 设置创建人修改人id 后期需要改动为 登录用户id
+        employee.setUpdateUser(BaseContext.getCurrentId());
+        employee.setCreateUser(BaseContext.getCurrentId());
+        //
+        employeeMapper.insert(employee);
+
+
+    }
+
+
 
 }
