@@ -3,18 +3,17 @@ package com.sky.controller.admin;
 import com.sky.constant.JwtClaimsConstant;
 import com.sky.dto.EmployeeDTO;
 import com.sky.dto.EmployeeLoginDTO;
+import com.sky.dto.EmployeePageQueryDTO;
 import com.sky.entity.Employee;
 import com.sky.properties.JwtProperties;
+import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.EmployeeService;
 import com.sky.utils.JwtUtil;
 import com.sky.vo.EmployeeLoginVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -77,12 +76,37 @@ public class EmployeeController {
      * @return
      */
 
-    @PostMapping
+    @PostMapping//前端请求格式为json 才需要添加@requesBody
     public Result save(@RequestBody EmployeeDTO employeeDTO){
         log.info("新增员工:{}",employeeDTO);
         employeeService.save(employeeDTO);
         return Result.success();
 
+    }
+
+    /**
+     * 员工分页查询
+     * @param employeePageQueryDTO
+     * @return
+     */
+    @GetMapping("/page")
+    public  Result<PageResult> page(EmployeePageQueryDTO employeePageQueryDTO){
+        log.info("员工分页查询 参数为{}",employeePageQueryDTO);
+        PageResult pageResult  =employeeService.pageQurey(employeePageQueryDTO);
+        return Result.success(pageResult);
+    }
+
+    /**
+     * 员工账户启用禁用
+     * @param status
+     * @param id
+     * @return
+     */
+    @PostMapping("/status/{status}")
+    public  Result startOrStop(@PathVariable Integer status ,long id){// 路径参数前需要添加@PathVariable
+        log.info("账号使用 状态参数 {},{}",status,id);
+        employeeService.startOrStop(status,id);
+        return Result.success();
     }
 
 
